@@ -1,0 +1,66 @@
+<!--
+  BRIEFING PAGE TEMPLATE — do not edit the structure, only fill placeholders.
+
+  This file is not itself part of the live site (it's not linked from
+  anywhere). It exists purely so the automated routine has a fixed
+  skeleton to copy and fill in, instead of "designing" a page from
+  scratch each time. That's what keeps every day looking identical.
+
+  PLACEHOLDERS TO REPLACE:
+    {{PAGE_TITLE}}   – short teaser used in the browser tab, e.g. "Kyiv talks break up without a deal"
+    {{TAG_CLASS}}    – exactly "daily" or "weekly"
+    {{TAG_LABEL}}    – exactly "Daily brief" or "Weekly report"
+    {{DATE_LABEL}}   – e.g. "Monday, 7 September 2026" or "31 August – 6 September 2026"
+    {{HEADLINE}}     – the big h2 headline for this entry
+    {{BODY_HTML}}    – the rest of the content, built from the allowed
+                        elements listed below. This is the only
+                        placeholder that contains multiple HTML elements.
+    {{PREV_HREF}} / {{PREV_LABEL}}   – link to the chronologically earlier page, or omit for the oldest page
+    {{NEXT_HREF}} / {{NEXT_LABEL}}   – link to the chronologically later page, or omit for the newest page
+    {{SOURCES_LINE}} – the italic "Compiled from ..." footer line
+
+  ALLOWED ELEMENTS INSIDE {{BODY_HTML}} (these classes already have
+  matching styles in assets/style.css — do not invent new ones):
+    <p>...</p>                          – a normal paragraph
+    <h3>Section title</h3>              – a section heading (e.g. "Stock market & economy")
+    <ul><li>...</li></ul>               – a bulleted list, each <li> can contain <strong> for lead-ins
+    <div class="callout"><p>...</p></div>   – highlighted "off the beaten path" style box
+    <div class="levels">line1<br>line2</div> – monospace data block, e.g. key index levels
+    (the sources line goes in its own placeholder, not inside BODY_HTML)
+
+  FILE NAMING CONVENTION for the output file:
+    briefings/YYYY-MM-DD-daily.html   or   briefings/YYYY-MM-DD-weekly.html
+    (for weekly reports, use the date of the more recent day in the range)
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{PAGE_TITLE}} — Ruben's Markets Log</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="topbar">
+  <a class="site-title" href="../index.html">Ruben's Markets Log</a>
+  <a class="back-link" href="../index.html">&larr; all briefings</a>
+</div>
+<div class="page">
+  <article class="entry">
+    <div class="entry-kicker">
+      <span class="tag {{TAG_CLASS}}">{{TAG_LABEL}}</span>
+      <span>{{DATE_LABEL}}</span>
+    </div>
+    <h2>{{HEADLINE}}</h2>
+
+    {{BODY_HTML}}
+
+    <p class="sources">{{SOURCES_LINE}}</p>
+  </article>
+  <div class="page-nav">
+    <a href="{{PREV_HREF}}">&larr; {{PREV_LABEL}}</a>
+    <a href="{{NEXT_HREF}}">{{NEXT_LABEL}} &rarr;</a>
+  </div>
+</div>
+</body>
+</html>
