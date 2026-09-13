@@ -511,6 +511,10 @@ def main():
              f'{sum(1 for e in entries if e["kind"] == "weekly")} weekly'
 
     prices = site_data["prices"]
+    as_of = prices.get("updated", "n/a")
+    if as_of != "n/a":
+        d = dt.date.fromisoformat(as_of)
+        as_of = f"{d.day} {d.strftime('%b')} {d.year}"
     perf_warn = ""
     if prices.get("placeholder"):
         perf_warn = ('    <p class="perf-warn">Placeholder prices &mdash; replace '
@@ -568,8 +572,9 @@ def main():
       <div class="perf">
 {perf_warn}        <p class="perf-window" id="perfWindow"></p>
         <div id="perfRows"></div>
-        <p class="perf-foot">Price return in each fund's own currency &mdash; no FX,
-        dividends or position sizes. Source: data/prices.json.</p>
+        <p class="perf-foot">Price return in EUR, dividends excluded &mdash; the
+        USD-denominated funds therefore include the currency move. No position
+        sizes. Source: justETF, close of {as_of}.</p>
       </div>
 
       <section class="latest">
