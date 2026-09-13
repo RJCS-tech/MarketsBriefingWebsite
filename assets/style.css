@@ -222,3 +222,353 @@ a{color:inherit;}
   .entry h2{ font-size:26px; }
   .page{ padding:32px 18px 80px; }
 }
+
+/* ============================================================
+   INDEX / DASHBOARD
+   The landing page is the only wide page on the site: a calendar
+   of briefings on the left, a portfolio performance card on the
+   right. Everything below re-uses the same paper palette as the
+   article pages so the two never feel like different sites.
+   ============================================================ */
+
+:root{
+  --up:#3C6E64;
+  --down:#A23B2C;
+  --card:#F5F6EF;
+}
+
+.page-wide{
+  max-width:1000px;
+  margin:0 auto;
+  padding:44px 24px 100px;
+}
+
+/* ---------- Masthead ---------- */
+.masthead{
+  border-bottom:2px solid var(--ink);
+  padding-bottom:18px;
+  margin-bottom:6px;
+}
+.masthead h1{
+  font-family:'Fraunces', serif;
+  font-weight:600;
+  font-size:38px;
+  line-height:1.1;
+  margin:0 0 12px;
+  letter-spacing:-0.01em;
+}
+.masthead p{
+  font-size:15.5px;
+  color:var(--ink-soft);
+  line-height:1.55;
+  margin:0;
+  max-width:64ch;
+}
+.masthead-meta{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+  padding:8px 0 30px;
+  border-bottom:1px solid var(--rule);
+  margin-bottom:34px;
+}
+
+/* ---------- Two-column dashboard ---------- */
+.dash{
+  display:grid;
+  grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);
+  gap:38px;
+  align-items:start;
+}
+.panel-label{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  margin:0 0 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+/* ---------- Calendar ---------- */
+.cal-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border-bottom:1px solid var(--rule);
+  padding-bottom:10px;
+  margin-bottom:4px;
+}
+.cal-month{
+  font-family:'Fraunces', serif;
+  font-weight:600;
+  font-size:20px;
+}
+.cal-nav{ display:flex; gap:6px; }
+.cal-nav button{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:13px;
+  line-height:1;
+  width:28px;
+  height:28px;
+  background:transparent;
+  color:var(--ink);
+  border:1px solid var(--rule);
+  border-radius:2px;
+  cursor:pointer;
+}
+.cal-nav button:hover:not(:disabled){ background:var(--paper-alt); }
+.cal-nav button:disabled{ color:var(--rule); cursor:default; }
+
+.cal-grid{
+  display:grid;
+  grid-template-columns:repeat(7, 1fr) 34px;
+  gap:3px;
+}
+.cal-dow{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  letter-spacing:0.06em;
+  color:var(--ink-soft);
+  text-align:center;
+  padding:10px 0 6px;
+}
+
+/* A day cell is a link when a brief exists that day, a plain div when not. */
+.cal-day{
+  position:relative;
+  aspect-ratio:1/1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  border:1px solid transparent;
+  border-radius:3px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12.5px;
+  color:var(--ink-soft);
+  text-decoration:none;
+}
+.cal-day.pad{ visibility:hidden; }
+.cal-day.empty{ color:var(--rule); }
+.cal-day.has{
+  background:var(--card);
+  border-color:var(--rule);
+  color:var(--ink);
+  font-weight:500;
+}
+.cal-day.has:hover{
+  background:var(--ink);
+  color:var(--paper);
+  border-color:var(--ink);
+}
+.cal-day.has:hover .cal-dot{ background:var(--paper); }
+.cal-day.today{ border-color:var(--ink); border-style:dashed; }
+.cal-dot{
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:var(--trade);
+}
+/* 8th column: the weekly report covering that Mon–Sun row. */
+.cal-week{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:3px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  letter-spacing:0.04em;
+  text-decoration:none;
+  color:var(--rule);
+}
+.cal-week.has{
+  background:var(--rate);
+  color:var(--paper);
+  font-weight:500;
+}
+.cal-week.has:hover{ background:var(--ink); }
+
+.cal-legend{
+  display:flex;
+  gap:18px;
+  flex-wrap:wrap;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px;
+  color:var(--ink-soft);
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid var(--rule);
+}
+.cal-legend span{ display:flex; align-items:center; gap:6px; }
+.swatch{ width:9px; height:9px; border-radius:2px; display:inline-block; }
+.swatch.daily{ background:var(--card); border:1px solid var(--rule); }
+.swatch.weekly{ background:var(--rate); }
+
+/* Preview of the hovered / selected day, under the grid. */
+.cal-preview{
+  margin-top:16px;
+  padding:14px 16px;
+  background:var(--paper-alt);
+  border-left:3px solid var(--rule);
+  min-height:78px;
+}
+.cal-preview .cp-kicker{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  margin:0 0 6px;
+}
+.cal-preview .cp-title{
+  font-size:15px;
+  line-height:1.45;
+  margin:0;
+}
+.cal-preview a{ text-decoration:none; border-bottom:1px solid var(--rule); }
+.cal-preview a:hover{ border-bottom-color:var(--ink); }
+.cal-preview.is-empty .cp-title{ color:var(--ink-soft); font-style:italic; }
+
+/* ---------- Portfolio card ---------- */
+.perf{
+  background:var(--card);
+  border:1px solid var(--rule);
+  border-radius:3px;
+  padding:18px 18px 14px;
+}
+.perf-switch{
+  display:inline-flex;
+  border:1px solid var(--rule);
+  border-radius:3px;
+  overflow:hidden;
+  background:var(--paper);
+}
+.perf-switch button{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px;
+  letter-spacing:0.05em;
+  padding:5px 10px;
+  background:transparent;
+  color:var(--ink-soft);
+  border:0;
+  border-right:1px solid var(--rule);
+  cursor:pointer;
+}
+.perf-switch button:last-child{ border-right:0; }
+.perf-switch button:hover{ color:var(--ink); }
+.perf-switch button[aria-pressed="true"]{
+  background:var(--ink);
+  color:var(--paper);
+}
+
+.perf-window{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px;
+  color:var(--ink-soft);
+  margin:12px 0 4px;
+}
+.perf-row{
+  display:grid;
+  grid-template-columns:46px minmax(0,1fr) 62px 60px;
+  align-items:center;
+  gap:10px;
+  padding:11px 0;
+  border-top:1px solid var(--rule);
+}
+.perf-row:first-of-type{ border-top:0; }
+.perf-tkr{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12px;
+  font-weight:600;
+}
+.perf-name{
+  font-size:13px;
+  color:var(--ink-soft);
+  line-height:1.3;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.perf-spark{ display:block; width:62px; height:22px; }
+.perf-chg{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:13px;
+  font-weight:600;
+  text-align:right;
+}
+.perf-chg.up{ color:var(--up); }
+.perf-chg.down{ color:var(--down); }
+.perf-chg.flat{ color:var(--ink-soft); }
+
+.perf-foot{
+  border-top:1px solid var(--rule);
+  margin-top:4px;
+  padding-top:10px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  color:var(--ink-soft);
+  line-height:1.5;
+}
+.perf-warn{
+  background:var(--rate);
+  color:var(--paper);
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  letter-spacing:0.04em;
+  padding:7px 10px;
+  border-radius:2px;
+  margin:0 0 14px;
+  line-height:1.5;
+}
+
+/* ---------- Latest strip + archive ---------- */
+.latest{ margin-top:34px; }
+.latest ol{ list-style:none; margin:0; padding:0; border-top:1px solid var(--rule); }
+.latest li{ border-bottom:1px solid var(--rule); }
+.latest a{
+  display:block;
+  padding:11px 2px;
+  text-decoration:none;
+  font-size:14px;
+  line-height:1.45;
+}
+.latest a:hover{ background:rgba(28,32,28,0.05); }
+.latest .l-date{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px;
+  letter-spacing:0.05em;
+  color:var(--ink-soft);
+  display:block;
+  margin-bottom:3px;
+}
+
+.archive{ margin-top:46px; border-top:1px solid var(--rule); padding-top:18px; }
+.archive summary{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  cursor:pointer;
+}
+.archive summary:hover{ color:var(--ink); }
+.archive .index-list{ margin-top:16px; }
+
+@media (max-width: 860px){
+  .dash{ grid-template-columns:1fr; gap:34px; }
+  .masthead h1{ font-size:30px; }
+  .page-wide{ padding:32px 18px 80px; }
+  .cal-day{ font-size:11.5px; }
+}

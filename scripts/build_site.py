@@ -13,6 +13,8 @@ again. Safe to run as many times as you like; it's fully deterministic
 (same inputs always produce the same output).
 """
 
+import datetime as dt
+import json
 import re
 import sys
 from pathlib import Path
@@ -21,6 +23,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SOURCE_DIR = ROOT / "source"
 BRIEFINGS_DIR = ROOT / "briefings"
 INDEX_PATH = ROOT / "index.html"
+PRICES_PATH = ROOT / "data" / "prices.json"
 
 WEEKDAY_ABBR = {
     "Monday": "MON", "Tuesday": "TUE", "Wednesday": "WED", "Thursday": "THU",
@@ -216,6 +219,15 @@ PAGE_SHELL = """<!DOCTYPE html>
 """
 
 
+def load_prices():
+    """Price history for the portfolio panel. Optional: if data/prices.json is
+    missing the panel simply renders empty rather than failing the build."""
+    if not PRICES_PATH.exists():
+        print(f"note: {PRICES_PATH} not found — portfolio panel will be empty")
+        return {"tickers": [], "series": {}}
+    return json.loads(PRICES_PATH.read_text(encoding="utf-8"))
+
+
 def main():
     if not SOURCE_DIR.exists():
         sys.exit(f"No source/ folder found at {SOURCE_DIR}")
@@ -232,8 +244,10 @@ def main():
         if kind == "weekly":
             headline = f"Weekly Markets Report — {date_label}"
         out_name = f.stem + ".html"  # e.g. 2026-09-08-daily.html
+        iso_date = f.stem[:10]       # weeklies are named for the Sunday they close on
         entries.append({
             "path": out_name,
+            "iso_date": iso_date,
             "kind": kind,
             "date_label": date_label,
             "short_date": short_date_label(date_label, kind),
@@ -269,16 +283,48 @@ def main():
         (BRIEFINGS_DIR / e["path"]).write_text(page, encoding="utf-8")
 
     # ---- index.html ----
-    weekly_items = "\n".join(
-        f'    <li><a href="briefings/{e["path"]}"><span class="idx-teaser">{e["headline"]}</span>'
+    # The landing page is a calendar + portfolio dashboard rendered client-side
+    # by assets/app.js. Everything it needs is inlined here as one JSON blob, so
+    # the page still works when opened straight off disk (no fetch, no server).
+    site_data = {
+        "today": dt.date.today().isoformat(),
+        "briefings": [
+            {
+                "date": e["iso_date"],
+                "kind": e["kind"],
+                "href": f'briefings/{e["path"]}',
+                "headline": e["headline"],
+                "long": e["date_label"],
+                "short": e["short_date"],
+            }
+            for e in entries
+        ],
+        "prices": load_prices(),
+    }
+    data_json = json.dumps(site_data, ensure_ascii=False, separators=(",", ":"))
+    # Guard the inline <script> against a stray "</script>" inside any headline.
+    data_json = data_json.replace("<", "\\u003c")
+
+    archive_items = "\n".join(
+        f'      <li><a href="briefings/{e["path"]}"><span class="idx-teaser">{e["headline"]}</span>'
         f'<span class="idx-date">{e["short_date"]}</span></a></li>'
-        for e in reversed(entries) if e["kind"] == "weekly"
+        for e in reversed(entries)
     )
-    daily_items = "\n".join(
-        f'    <li><a href="briefings/{e["path"]}"><span class="idx-teaser">{e["headline"]}</span>'
-        f'<span class="idx-date">{e["short_date"]}</span></a></li>'
-        for e in reversed(entries) if e["kind"] == "daily"
+    latest_items = "\n".join(
+        f'      <li><a href="briefings/{e["path"]}"><span class="l-date">{e["short_date"]}'
+        f' &middot; {"Weekly" if e["kind"] == "weekly" else "Daily"}</span>{e["headline"]}</a></li>'
+        for e in list(reversed(entries))[:4]
     )
+
+    newest = entries[-1]
+    counts = f'{sum(1 for e in entries if e["kind"] == "daily")} daily &middot; ' \
+             f'{sum(1 for e in entries if e["kind"] == "weekly")} weekly'
+
+    prices = site_data["prices"]
+    perf_warn = ""
+    if prices.get("placeholder"):
+        perf_warn = ('    <p class="perf-warn">Placeholder prices &mdash; replace '
+                     'data/prices.json with real closes.</p>\n')
 
     index_html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -292,22 +338,70 @@ def main():
 <div class="topbar">
   <a class="site-title" href="index.html">Ruben's Markets Log</a>
 </div>
-<div class="page">
-  <div class="index-intro">
+<div class="page-wide">
+
+  <header class="masthead">
     <h1>Ruben's Markets Log</h1>
     <p>Daily briefs and weekly wrap-ups tracking the Fed/ECB path, the Iran conflict, and Russia&ndash;Ukraine talks against the AEX index, EURO STOXX 50, MSCI World, S&amp;P 500 and FTSE All-World High Dividend Yield ETFs.</p>
+  </header>
+  <div class="masthead-meta">
+    <span>{counts}</span>
+    <span>Latest &mdash; {newest["short_date"]}</span>
   </div>
 
-  <p class="index-group-label">WEEKLY REPORTS</p>
-  <ul class="index-list weekly">
-{weekly_items}
-  </ul>
+  <div class="dash">
+    <section>
+      <p class="panel-label">Briefing calendar</p>
+      <div class="cal-head">
+        <span class="cal-month" id="calMonth"></span>
+        <span class="cal-nav">
+          <button id="calPrev" type="button" aria-label="Previous month">&larr;</button>
+          <button id="calNext" type="button" aria-label="Next month">&rarr;</button>
+        </span>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-legend">
+        <span><i class="swatch daily"></i> Daily brief</span>
+        <span><i class="swatch weekly"></i> Weekly report (row end)</span>
+      </div>
+      <div class="cal-preview is-empty" id="calPreview"></div>
+    </section>
 
-  <p class="index-group-label">DAILY BRIEFS</p>
-  <ul class="index-list">
-{daily_items}
-  </ul>
+    <aside>
+      <p class="panel-label">Portfolio
+        <span class="perf-switch" id="perfSwitch">
+          <button type="button" data-range="ytd" aria-pressed="true">YTD</button>
+          <button type="button" data-range="1m" aria-pressed="false">1M</button>
+          <button type="button" data-range="1w" aria-pressed="false">1W</button>
+        </span>
+      </p>
+      <div class="perf">
+{perf_warn}        <p class="perf-window" id="perfWindow"></p>
+        <div id="perfRows"></div>
+        <p class="perf-foot">Price return in each fund's own currency &mdash; no FX,
+        dividends or position sizes. Source: data/prices.json.</p>
+      </div>
+
+      <section class="latest">
+        <p class="panel-label">Latest</p>
+        <ol>
+{latest_items}
+        </ol>
+      </section>
+    </aside>
+  </div>
+
+  <details class="archive">
+    <summary>Full archive &mdash; all {len(entries)} briefings</summary>
+    <ul class="index-list">
+{archive_items}
+    </ul>
+  </details>
+
 </div>
+<script id="site-data" type="application/json">{data_json}</script>
+<script>window.SITE_DATA = JSON.parse(document.getElementById('site-data').textContent);</script>
+<script src="assets/app.js"></script>
 </body>
 </html>
 """
