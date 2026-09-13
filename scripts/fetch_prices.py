@@ -95,15 +95,32 @@ def main():
         print(f"  {ticker:5} {isin}  {len(closes):3} closes  "
               f"{min(closes)} → {last}  ({closes[last]})")
 
-    OUT.parent.mkdir(exist_ok=True)
-    OUT.write_text(json.dumps({
+    doc = {
         "source": "justETF performance-chart API",
         "basis": "Market value in EUR, dividends excluded (price return).",
         "fetched": dt.datetime.now().astimezone().isoformat(timespec="seconds"),
         "updated": latest,
         "tickers": meta,
         "series": series,
-    }, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    }
+
+    # Only rewrite when something other than the clock changed. Without this a
+    # daily run on a weekend or holiday would still produce a diff — and a
+    # commit, and a rebuilt index.html — purely from the "fetched" timestamp.
+    SIGNIFICANT = ("source", "basis", "updated", "tickers", "series")
+    if OUT.exists():
+        try:
+            old = json.loads(OUT.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            old = None
+        if old and all(old.get(k) == doc[k] for k in SIGNIFICANT):
+            print(f"\nNo new closes since {old.get('fetched', 'last run')} — "
+                  f"{OUT.relative_to(ROOT)} left unchanged.")
+            return
+
+    OUT.parent.mkdir(exist_ok=True)
+    OUT.write_text(json.dumps(doc, indent=1, ensure_ascii=False) + "\n",
+                   encoding="utf-8")
     print(f"\nWrote {OUT.relative_to(ROOT)} — latest close {latest}")
 
 
